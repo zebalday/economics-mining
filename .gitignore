@@ -1,2 +1,5 @@
 venv
 requirements.txt
+core/.env
+data
+data_processed
