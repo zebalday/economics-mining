@@ -16,7 +16,7 @@ class API():
         "IPC": "ipc",
         "BTC": "bitcoin",
         "USD": "dolar",
-        "USDI": "dolar_intercamvio",
+        "USDI": "dolar_intercambio",
         "EU": "euro",
         "TPM": "tpm",
         "TD": "tasa_desempleo",
@@ -115,6 +115,44 @@ class API():
         
         return None
 
+
+    # get indicator current value
+    def indicator_current(
+            self,
+            indicator : str = None,
+            year : int = None
+        ) -> DataFrame | None:
+
+        """ 
+        Indicator Current Value
+        -----------------------
+        indicator : String = Any value from INDICATORS_DICT. Incorrect indicator falls to
+        DEFAULT_INDICATOR.
+        year : Integer = Any year that's prior or equal to current year.
+
+        Returns pandas.DataFrame with day value of selected indicator (or None).
+        """
+
+        # parameters
+        if indicator == "USDI" :
+            url = f"https://mindicador.cl/api/{self.INDICATORS_DICT[indicator]}/"
+
+        else:
+            indicator, year = self.get_valid_parameters(indicator, year)
+            url = self.BASE_URL % (indicator, year)
+                
+        # get petition
+        response = get(url = url)
+
+        # response
+        if response.status_code == 200:
+            data = response.json()["serie"][0]
+            data = {key:[value] for key, value in data.items()}
+            data["indicador"] = [indicator]
+            
+            return DataFrame(data = data)
+        
+        return None
 
     
     # get valid parameters
