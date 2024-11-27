@@ -44,6 +44,7 @@ class API():
         self.DEFAULT_INDICATOR = self.INDICATORS_DICT["UF"]
         self.DEFAULT_YEAR = datetime.now().year
         self.DEFAULT_DATE = datetime.now().strftime("%d-%m-%Y")
+        self.INDICATORS_INVERSE = {v: k for k, v in self.INDICATORS_DICT.items()}
 
 
 
@@ -146,11 +147,17 @@ class API():
 
         # response
         if response.status_code == 200:
-            data = response.json()["serie"][0]
-            data = {key:[value] for key, value in data.items()}
-            data["indicador"] = [indicator]
-            
-            return DataFrame(data = data)
+            # data
+            response = response.json()
+            data = response["serie"][0]
+            delta = response["serie"][0]['valor'] - response["serie"][1]['valor']
+
+            data["indicador"] = indicator if indicator != "USDI" else self.INDICATORS_DICT[indicator]
+            data["sigla"] = self.INDICATORS_INVERSE[indicator] if indicator != "USDI" else "USDI"
+            data["delta"] = round(delta, 2)
+            data["variacion"] = self.get_delta_desc(delta)
+
+            return data
         
         return None
 
@@ -214,7 +221,7 @@ class API():
 
         """ 
         Get Valid Date
-        --------------------
+        ---------------
         date : String = Date to check.
 
         Returns valid date.
@@ -227,6 +234,32 @@ class API():
         # return
         date = date if valid_date else self.DEFAULT_DATE
         return date
+
+
+
+    # get delta description
+    @staticmethod
+    def get_delta_desc(
+        value : float
+        ) -> str:
+        
+        """ 
+        Get Delta Description
+        ---------------------
+        value : float = Value to match.
+
+        Returns the descripcion of the given delta value (mantiene, subida, bajada).
+        """
+
+        match value:
+            case value if value == 0:
+                return "mantiene"
+            case value if value > 0:
+                return "subida"
+            case value if value < 0:
+                return "bajada"
+            case _ : 
+                return "none"
 
 
 
